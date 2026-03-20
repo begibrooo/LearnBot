@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     AI_MAX_TOKENS: int = 1024
     AI_DAILY_LIMIT: int = 50
 
+    # ── Database ──────────────────────────────────────────────
+    DATA_DIR: str = "."
+
     # ── Web App ───────────────────────────────────────────────
     WEBAPP_URL: str = ""       # e.g. https://your-app.netlify.app
     WEBAPP_PORT: int = 8080    # API server port

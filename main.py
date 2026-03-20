@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
@@ -41,56 +42,38 @@ async def main():
         token=settings.BOT_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
-    storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
+    dp = Dispatcher(storage=MemoryStorage())
 
     dp.message.middleware(ThrottleMiddleware())
     dp.message.middleware(AuthMiddleware())
     dp.callback_query.middleware(AuthMiddleware())
 
-    dp.include_router(start.router)
-    dp.include_router(subscription.router)
-    dp.include_router(menu.router)
-    dp.include_router(lessons.router)
-    dp.include_router(profile.router)
-    dp.include_router(search.router)
-    dp.include_router(promo.router)
-    dp.include_router(referral.router)
-    dp.include_router(leaderboard.router)
-    dp.include_router(support.router)
-    dp.include_router(admin_main.router)
-    dp.include_router(admin_content.router)
-    dp.include_router(admin_promo.router)
-    dp.include_router(admin_users.router)
-    dp.include_router(admin_broadcast.router)
-    dp.include_router(actions.router)
-    dp.include_router(checkin.router)
-    dp.include_router(quiz.router)
-    dp.include_router(notes.router)
-    dp.include_router(stats.router)
-    dp.include_router(rewards.router)
-    dp.include_router(reminders.router)
-    dp.include_router(feedback.router)
-    dp.include_router(admin_members.router)
-    dp.include_router(achievements.router)
-    dp.include_router(daily_challenge.router)
-    dp.include_router(ai_chat.router)
-    dp.include_router(admin_games.router)
+    for router in [
+        start.router, subscription.router, menu.router, lessons.router,
+        profile.router, search.router, promo.router, referral.router,
+        leaderboard.router, support.router, admin_main.router,
+        admin_content.router, admin_promo.router, admin_users.router,
+        admin_broadcast.router, actions.router, checkin.router, quiz.router,
+        notes.router, stats.router, rewards.router, reminders.router,
+        feedback.router, admin_members.router, achievements.router,
+        daily_challenge.router, ai_chat.router, admin_games.router,
+    ]:
+        dp.include_router(router)
 
     await bot.delete_webhook(drop_pending_updates=True)
-
     asyncio.create_task(friday_reward_loop(bot))
     asyncio.create_task(reminder_loop(bot))
 
-    # Start Web App API server
+    # Railway provides PORT automatically — use it
+    port = int(os.environ.get("PORT", 8080))
     webapp = create_webapp()
     runner = web.AppRunner(webapp)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", settings.WEBAPP_PORT)
+    site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    logger.info(f"Web App API running on port {settings.WEBAPP_PORT}")
+    logger.info(f"Web server on port {port} — Railway URL is your webapp URL")
 
-    logger.info("Bot started. Polling...")
+    logger.info("Bot polling started.")
     await dp.start_polling(bot)
 
 
